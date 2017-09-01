@@ -294,9 +294,9 @@ class IK220_channels(PseudoCounterController):
         try:
             angles = self.ik220_dev.read_attribute('Angles').value
             if index == 9:
-                return sum(angles[:3])/3.0
+                return sum(angles[:3])/3.0 # Excluded channel 4 of grating pitch encoder because of problems of Homing in the last header of the RON grating encoder.
             elif index == 10:
-                return sum(angles[4:8])/4.0
+                return sum(angles[4:6])/2.0 # Modified from 4 channels to 2 channels because of problems of Homing in the 2 last headers of the RON mirror3 encoder.
             else:
                 return angles[index - 1]
         except:

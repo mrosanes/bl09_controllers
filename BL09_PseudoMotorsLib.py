@@ -34,7 +34,13 @@ class EnergyCff(PseudoMotorController):
                         },
                     }
 
-    ctrl_extra_attributes = {"DiffrOrder":
+    ctrl_extra_attributes = {"Lines":
+                                  {'Type':'PyTango.DevDouble',
+                                   'Description':'Grating number of lines',
+                                   'memorized':Memorized,
+                                   'R/W Type':'PyTango.READ_WRITE',
+                                  },
+                             "DiffrOrder":
                                   {'Type':'PyTango.DevDouble',
                                    'R/W Type':'PyTango.READ_WRITE',
                                    'DefaultValue':1.0
@@ -99,6 +105,7 @@ class EnergyCff(PseudoMotorController):
 
         self.Cff = 0.0
         self.DiffrOrder = 1.0
+        self.Lines = 600
 
         self.iorDP = PyTango.DeviceProxy(self.gr_ior)
         self.iorDP2 = PyTango.DeviceProxy(self.m3_ior)
@@ -193,6 +200,8 @@ class EnergyCff(PseudoMotorController):
         
         if name.lower() == "diffrorder":
             return self.DiffrOrder
+        if name.lower() == "lines":
+            return self.Lines
         
         if name.lower() == "alpha":
             return self.alpha
@@ -220,6 +229,8 @@ class EnergyCff(PseudoMotorController):
             return self.velocity
 
     def SetExtraAttributePar(self, axis, name, value):
+        if name.lower() == "lines":
+            self.Lines = value
         if name.lower() == "diffrorder":
             self.DiffrOrder = value
         if name.lower() == "a_offset_coeff":
@@ -254,7 +265,8 @@ class EnergyCff(PseudoMotorController):
 
     def look_at_grx(self):
             
-        return 600.0 * 1E-7
+        #return 600.0 * 1E-7
+        return self.Lines * 1E-7
 
     def checkOffset(self):
         offsetGrating,offsetMirror = 0.0,0.0
@@ -661,6 +673,11 @@ class EnergyCffFixed(PseudoMotorController):
                                    'R/W Type':'PyTango.READ_WRITE',
                                    'DefaultValue':1.0
                                   },
+                             "Lines":
+                                  {'Type':'PyTango.DevDouble',
+                                   'memorized':Memorized,
+                                   'R/W Type':'PyTango.READ_WRITE',
+                                  },
                              "Alpha":
                                   {'Type':'PyTango.DevDouble',
                                    'R/W Type':'PyTango.READ',
@@ -700,9 +717,9 @@ class EnergyCffFixed(PseudoMotorController):
         PseudoMotorController.__init__(self,inst,props, *args, **kwargs)
 
         self.Cff = 2.25 #It was set to 1
+        self.Lines = 600.0
         self.DiffrOrder = 1.0
         self.IncludedAngle = 1.0
-        self.lineDensity = 600.0* 1E-7
         
         self.iorDP = PyTango.DeviceProxy(self.gr_ior)
         self.iorDP2 = PyTango.DeviceProxy(self.m3_ior)
@@ -732,7 +749,7 @@ class EnergyCffFixed(PseudoMotorController):
         waveLen = self.hc / energy
         f1 = self.Cff**2 + 1
         f2 = 1 - self.Cff**2
-        K = self.DiffrOrder * waveLen * self.lineDensity
+        K = self.DiffrOrder * waveLen * self.look_at_grx()
         
         CosAlpha = math.sqrt(-1*K**2 * f1 + 2*math.fabs(K) * math.sqrt(f2**2 + self.Cff**2 * K**2))/math.fabs(f2)
 
@@ -753,7 +770,7 @@ class EnergyCffFixed(PseudoMotorController):
         beta = (physical_pos[1]/1000) - (math.pi/2.0) - offsetG
         theta = (math.pi/2.0) - (physical_pos[0]/1000) - offsetM
         alpha = (2.0*theta) + beta
-        wavelength = (math.sin(alpha) + math.sin(beta)) / (self.DiffrOrder * self.lineDensity)
+        wavelength = (math.sin(alpha) + math.sin(beta)) / (self.DiffrOrder * self.look_at_grx())
         
         if wavelength == 0.0:
             energy_physicalmot = 0
@@ -779,6 +796,8 @@ class EnergyCffFixed(PseudoMotorController):
         if name.lower() == "diffrorder":
             return self.DiffrOrder
         
+        if name.lower() == "lines":
+            return self.Lines
         if name.lower() == "alpha":
             return self.alpha
         if name.lower() == "beta":
@@ -800,6 +819,9 @@ class EnergyCffFixed(PseudoMotorController):
 
         if name.lower() == "diffrorder":
             self.DiffrOrder = value
+
+        if name.lower() == "lines":
+            self.Lines = value
 
         if name.lower() == "offsetgrxle":
             self.offsetGrxLE = value
@@ -824,3 +846,7 @@ class EnergyCffFixed(PseudoMotorController):
 
         return offsetGrating, offsetMirror
   
+
+    def look_at_grx(self):            
+        #return 600.0 * 1E-7
+        return self.Lines * 1E-7

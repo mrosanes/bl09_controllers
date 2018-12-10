@@ -115,7 +115,12 @@ class EnergyFromIK220(PseudoCounterController):
                               'Description':'M3_x ioregister',
                         },
                   }
-    ctrl_extra_attributes = { 
+    ctrl_extra_attributes = {"Lines":
+                                  {'Type':'PyTango.DevDouble',
+                                   'Description':'Grating number of lines',
+                                   'memorized':Memorized,
+                                   'R/W Type':'PyTango.READ_WRITE',
+                                  }, 
                              "offsetGrxLE":
                                   {'Type':'PyTango.DevDouble',
                                    'Description':'Offset for gr_x in LE (mrad)',
@@ -162,7 +167,8 @@ class EnergyFromIK220(PseudoCounterController):
         
         self.grPitch = PyTango.DeviceProxy(self.ik220_grPitch)
         self.mPitch = PyTango.DeviceProxy(self.ik220_mPitch)
-
+        self.Lines = 600.0
+        
         self.iorDP = PyTango.DeviceProxy(self.gr_ior)
         self.iorDP2 = PyTango.DeviceProxy(self.m3_ior)
 
@@ -225,11 +231,13 @@ class EnergyFromIK220(PseudoCounterController):
         return rad
     
     def look_at_grx(self):
-            
-        return 600.0 * 1E-7
+        #return 600.0 * 1E-7
+        return self.Lines * 1E-7
 
     def GetExtraAttributePar(self,axis,name):
         #self._log.debug("GetExtraAttributePar(%d,%s): Entering ...", axis, name)
+        if name.lower() == "lines":
+            return self.Lines
         if name.lower() == "offsetgrxle":
             return self.offsetGrxLE
         if name.lower() == "offsetmxle":
@@ -245,6 +253,8 @@ class EnergyFromIK220(PseudoCounterController):
 
     def SetExtraAttributePar(self,axis,name,value):
         #self._log.debug("SetExtraAttributePar(%d,%s,%f): Entering ...", axis, name, value)
+        if name.lower() == "lines":
+            self.Lines = value
         if name.lower() == "offsetgrxle":
             self.offsetGrxLE = value
         if name.lower() == "offsetmxle":
